@@ -1,0 +1,16 @@
+[Unit]
+Description=goida deployer bot
+After=network.target redis.service postgresql.service
+Wants=redis.service postgresql.service
+
+[Service]
+WorkingDirectory=/opt/goida-deployer
+EnvironmentFile=/opt/goida-deployer/.env
+ExecStart=/usr/bin/python3 deployer-bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
