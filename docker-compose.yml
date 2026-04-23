@@ -12,6 +12,19 @@ services:
       postgres:
         condition: service_healthy
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -38,3 +51,5 @@ services:
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
