@@ -4,9 +4,13 @@ BOT_TOKEN: str = os.environ["BOT_TOKEN"]
 REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 POSTGRES_DSN: str = os.environ["POSTGRES_DSN"]
 
+# владелец бота — всегда проходит канал-гейт
+OWNER_ID: int = int(os.getenv("OWNER_ID", "294057781"))
+
 # канал-гейт: пользователь обязан быть подписан перед использованием
 # значение: @username или числовой ID канала (напр. -1001234567890)
-REQUIRED_CHANNEL: str = os.getenv("REQUIRED_CHANNEL", "@goida_channel")
+# оставить пустым ("") — гейт отключён
+REQUIRED_CHANNEL: str = os.getenv("REQUIRED_CHANNEL", "")
 
 # версия goida-vpn, которую деплоим на серверы пользователей
 GOIDA_VPN_TAG: str = os.getenv("GOIDA_VPN_TAG", "v1.0.0")

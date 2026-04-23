@@ -1,17 +1,26 @@
 """Канал-гейт: пользователь должен быть подписан на REQUIRED_CHANNEL."""
+import logging
 from aiogram import BaseMiddleware, Bot
 from aiogram.types import TelegramObject, Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from typing import Any, Awaitable, Callable
 
 import config
 
+log = logging.getLogger(__name__)
+
 
 async def _is_member(bot: Bot, user_id: int) -> bool:
+    if not config.REQUIRED_CHANNEL:
+        return True
+    if user_id == config.OWNER_ID:
+        return True
     try:
         member = await bot.get_chat_member(config.REQUIRED_CHANNEL, user_id)
         return member.status not in ("left", "kicked", "banned", "restricted")
-    except Exception:
-        return False
+    except Exception as e:
+        log.warning("gate: get_chat_member(%s, %s) failed: %s", config.REQUIRED_CHANNEL, user_id, e)
+        # если бот не админ в канале — пропускаем, чтобы не блокировать всех
+        return True
 
 
 def _gate_kb() -> InlineKeyboardMarkup:
@@ -36,16 +45,12 @@ class ChannelGateMiddleware(BaseMiddleware):
     ) -> Any:
         bot: Bot = data["bot"]
 
-        # определяем user_id и объект для ответа
         if isinstance(event, Message):
             user_id = event.from_user.id
-            reply = event
         elif isinstance(event, CallbackQuery):
             user_id = event.from_user.id
-            # recheck callback пропускаем в handler — он сам ответит
             if event.data == "gate:recheck":
                 return await handler(event, data)
-            reply = event.message
         else:
             return await handler(event, data)
 
@@ -54,12 +59,12 @@ class ChannelGateMiddleware(BaseMiddleware):
                 await event.answer(_GATE_TEXT, reply_markup=_gate_kb(), parse_mode="HTML")
             elif isinstance(event, CallbackQuery):
                 await event.answer("Сначала подпишись на канал!", show_alert=True)
-            return  # блокируем
+            return
 
         return await handler(event, data)
 
 
-# ── recheck handler (регистрируется в main роутере) ──────────────────────────
+# ── recheck handler ───────────────────────────────────────────────────────────
 
 from aiogram import Router, F
 from aiogram.types import CallbackQuery as CQ
